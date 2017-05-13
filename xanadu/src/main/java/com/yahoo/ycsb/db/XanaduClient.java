@@ -1,4 +1,9 @@
-package com.yahoo.yscb.db;
+package com.yahoo.ycsb.db;
+
+import com.yahoo.ycsb.ByteIterator;
+import com.yahoo.ycsb.DB;
+import com.yahoo.ycsb.Status;
+import com.yahoo.ycsb.StringByteIterator;
 
 import com.xanadu.server.DistributedRegistry;
 import com.xanadu.store.DataStore;
@@ -7,13 +12,11 @@ import com.xanadu.store.KeyValue;
 import com.xanadu.store.KeyValueStore;
 import com.xanadu.util.ConfigHandler;
 import com.xanadu.util.ReferenceTools;
-import com.yahoo.ycsb.*;
+import com.xanadu.XanaduConnectionFactory;
 
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.util.*;
-
-import com.xanadu.XanaduConnectionFactory;
 
 /**
  * Created by Colin on 5/7/17.
@@ -32,6 +35,7 @@ public class XanaduClient extends DB {
   private KeyValueStore keyValueStore;
   private DataStore dataStore;
 
+  @Override
   public void init() {
     Properties props = getProperties();
 
@@ -63,6 +67,7 @@ public class XanaduClient extends DB {
     }
   }
 
+  @Override
   public void cleanup() {
     try {
       keyValueStore.close();
@@ -80,6 +85,7 @@ public class XanaduClient extends DB {
    * @param result A HashMap of field/value pairs for the result
    * @return read result
    */
+  @Override
   public Status read(String table, String key, Set<String> fields, HashMap<String, ByteIterator> result) {
     try {
       KeyValue kv = keyValueStore.getValueBefore(key, 0, Long.MAX_VALUE);
@@ -90,6 +96,9 @@ public class XanaduClient extends DB {
       return Status.OK;
     } catch(IOException e) {
       System.err.println("Failed to read entry with key " + key + ". IO exception.");
+      return Status.ERROR;
+    } catch(NullPointerException e) {
+      System.err.println("Failed to read entry with key " + key + ". Null pointer exception.");
       return Status.ERROR;
     }
   }
@@ -103,6 +112,7 @@ public class XanaduClient extends DB {
    * @param result A Vector of HashMaps, where each HashMap is a set field/value pairs for one record
    * @return Error status if this is trying to run
    */
+  @Override
   public Status scan(String table, String startkey, int recordcount, Set<String> fields, Vector<HashMap<String, ByteIterator>> result) {
     return Status.ERROR;
   }
@@ -114,6 +124,7 @@ public class XanaduClient extends DB {
    * @param values A HashMap of field/value pairs to update in the record
    * @return update status
    */
+  @Override
   public Status update(String table, String key, HashMap<String, ByteIterator> values) {
     return insert(table, key, values);
   }
@@ -125,6 +136,7 @@ public class XanaduClient extends DB {
    * @param values A HashMap of field/value pairs to insert in the record
    * @return insert status
    */
+  @Override
   public Status insert(String table, String key, HashMap<String, ByteIterator> values) {
     HashMap<String, String> stringHashMap = StringByteIterator.getStringMap(values);
 
@@ -145,8 +157,9 @@ public class XanaduClient extends DB {
    * @param key The record key of the record to delete.
    * @return The result of the operation.
    */
+  @Override
   public Status delete(String table, String key) {
-    return insert(table, key, new HashMap<>());
+    return insert(table, key, new HashMap<String, ByteIterator>());
   }
 
   private byte[] convertToBytes(HashMap<String, String> map) throws IOException {
