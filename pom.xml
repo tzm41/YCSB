@@ -140,6 +140,7 @@ LICENSE file.
     <module>solr6</module>
     <module>tarantool</module>
     <module>xanadu</module>
+    <module>xanadulegacy</module>
     <!--<module>voldemort</module>-->
   </modules>
 
